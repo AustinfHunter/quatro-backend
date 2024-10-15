@@ -138,6 +138,6 @@ STATIC_ROOT = "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 if os.environ.get("DJANGO_CORS_ALLOW_ALL") == "true":
-    DJANGO_CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = True
 else:
-    DJANGO_CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOW_ALL_ORIGINS = False
