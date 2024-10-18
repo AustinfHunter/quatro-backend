@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "users",
+    "foods",
     "rest_framework",
     "rest_framework.authtoken",
-    "drf_yasg",
     "corsheaders",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -141,3 +142,14 @@ if os.environ.get("DJANGO_CORS_ALLOW_ALL") == "true":
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOW_ALL_ORIGINS = False
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Quatro API",
+    "DESCRIPTION": "Quatro makes health and nutrition easy.",
+    "VERSION": "0.1.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}

@@ -2,11 +2,10 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework import permissions, status
 from rest_framework.response import Response
-from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
-from .serializers import CredentialsSerializer, UserSerializer, SignupSerializer
+from .serializers import UserSerializer, SignupSerializer
 from .validators import validate_registration_passwords
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 
 class SignUpView(APIView):
@@ -14,7 +13,7 @@ class SignUpView(APIView):
 
     permission_classes = (permissions.AllowAny,)
 
-    @swagger_auto_schema(request_body=SignupSerializer, responses={201: UserSerializer})
+    @extend_schema(request=SignupSerializer, responses={201: UserSerializer})
     def post(self, request):
         try:
             validate_registration_passwords(request.data)
