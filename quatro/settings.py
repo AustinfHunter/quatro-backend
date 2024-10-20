@@ -147,7 +147,8 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Quatro API",
     "DESCRIPTION": "Quatro makes health and nutrition easy.",
     "VERSION": "0.1.0",
-    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_INCLUDE_SCHEMA": True,
+    "AUTHENTICATION_CLASSES": {"drf_spectacular.validation.tokenAuth"},
 }
 
 REST_FRAMEWORK = {
