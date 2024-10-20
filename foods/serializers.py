@@ -2,8 +2,8 @@ from rest_framework import serializers
 from .models import UserFoodRestriction, UserFoodPreference
 
 
-class ErrorSerializer(serializers.Serializer):
-    message = serializers.CharField()
+class ResponseDetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
 
 
 class UserFoodRestrictionSerializer(serializers.ModelSerializer):
@@ -12,10 +12,21 @@ class UserFoodRestrictionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserFoodRestrictionListSerializer(serializers.Serializer):
+    restrictions = UserFoodRestrictionSerializer(many=True)
+
+
 class UserFoodRestrictionDTOSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserFoodPreference
+        model = UserFoodRestriction
         fields = ["fdc_id", "reason"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        restriction = UserFoodRestriction.objects.create(
+            user=user, fdc_id=validated_data["fdc_id"], reason=validated_data["reason"]
+        )
+        return restriction
 
 
 class UserFoodPreferenceSerializer(serializers.ModelSerializer):
@@ -24,10 +35,21 @@ class UserFoodPreferenceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserFoodPreferenceListSerializer(serializers.Serializer):
+    preferences = UserFoodPreferenceSerializer(many=True)
+
+
 class UserFoodPreferencesDTOSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserFoodPreference
         fields = ["fdc_id", "dislikes"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        preference = UserFoodPreference.objects.create(
+            user=user, fdc_id=validated_data["fdc_id"], dislikes=validated_data["dislikes"]
+        )
+        return preference
 
 
 class NutrientAcquisitionDetailsSerializer(serializers.Serializer):
