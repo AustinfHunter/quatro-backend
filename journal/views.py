@@ -1,6 +1,6 @@
 from django.utils import timezone
 from rest_framework.views import APIView, Response
-from rest_framework import status
+from rest_framework import status, permissions
 from .serializers import (
     UserFoodJournalEntryDTOSerializer,
     UserFoodJournalEntrySerializer,
@@ -14,6 +14,8 @@ from drf_spectacular.utils import extend_schema
 
 
 class UserFoodJournalEntriesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         responses={
             200: UserFoodJournalEntryListSerializer,
@@ -28,6 +30,8 @@ class UserFoodJournalEntriesView(APIView):
 
 
 class CreateUserFoodJournalEntryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         request=UserFoodJournalEntryDTOSerializer,
         responses={
@@ -69,6 +73,8 @@ class ModifyUserFoodJournalEntryView(APIView):
 
 
 class UserDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         responses={
             200: UserDashboardSerializer,
