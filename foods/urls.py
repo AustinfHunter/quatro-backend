@@ -9,4 +9,5 @@ urlpatterns = [
     path("restrictions/", views.UserFoodRestrictionListView.as_view()),
     path("restrictions/<int:fdc_id>", views.UserFoodRestrictionView.as_view()),
     path("restrictions/create/", views.CreateUserFoodRestrictionView.as_view()),
+    path("search/<str:query>", views.FoodSearchView.as_view()),
 ]

@@ -1,15 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
-from rest_framework.exceptions import APIException
-from drf_spectacular.utils import extend_schema, PolymorphicProxySerializer, OpenApiResponse
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from .fdcclient import get_fdc_client
-from .models import UserFoodPreference, UserFoodRestriction
+from .models import UserFoodPreference, UserFoodRestriction, AbridgedBrandedFoodItem
 from .serializers import (
-    BrandedFoodItemSerializer,
-    FoundationFoodItemSerializer,
-    AbridgedFoodItemSerializer,
+    AbridgedBrandedFoodSerializer,
+    AbridgedBrandedFoodListSerializer,
     UserFoodPreferenceSerializer,
     UserFoodRestrictionSerializer,
     UserFoodPreferencesDTOSerializer,
@@ -17,9 +14,10 @@ from .serializers import (
     UserFoodPreferenceListSerializer,
     UserFoodRestrictionListSerializer,
     ResponseDetailSerializer,
+    SearchResultSerializer,
 )
 from django.shortcuts import get_object_or_404
-
+from django.core.exceptions import ObjectDoesNotExist
 
 fdc_client = get_fdc_client()
 
@@ -29,20 +27,25 @@ class GetFoodsView(APIView):
 
     @extend_schema(
         responses={
-            200: PolymorphicProxySerializer(
-                component_name="Food",
-                serializers=[
-                    BrandedFoodItemSerializer,
-                    FoundationFoodItemSerializer,
-                    AbridgedFoodItemSerializer,
-                ],
-                resource_type_field_name="dataType",
-            ),
+            200: AbridgedBrandedFoodListSerializer,
         }
     )
     def get(self, request, fdc_ids: str):
-        res = fdc_client.get_food(fdc_ids=fdc_ids.split(","), format="full")
-        return Response(res.json(), status=status.HTTP_200_OK)
+        foods = []
+        for id in fdc_ids.split(","):
+            try:
+                food = AbridgedBrandedFoodItem.objects.get(fdc_id=id)
+                foods.append(food)
+            except ObjectDoesNotExist:
+                res = fdc_client.get_food(fdc_ids=id, format="full")
+                serializer = AbridgedBrandedFoodSerializer(data=res.json()[0])
+                if serializer.is_valid():
+                    foods.append(serializer.save())
+                else:
+                    print(serializer.errors)
+        return Response(
+            AbridgedBrandedFoodListSerializer({"foods": foods}).data, status=status.HTTP_200_OK
+        )
 
 
 class UserFoodPreferenceView(APIView):
@@ -207,3 +210,13 @@ class UserFoodRestrictionListView(APIView):
             UserFoodPreferenceListSerializer({"restrictions": restrictions}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class FoodSearchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: SearchResultSerializer})
+    def get(self, request, query: str):
+        results = fdc_client.search(query)
+        print(results)
+        return Response(SearchResultSerializer(results).data, status=status.HTTP_200_OK)

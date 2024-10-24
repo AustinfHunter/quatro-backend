@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "users",
     "foods",
+    "journal",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",

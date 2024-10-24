@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import UserFoodRestriction, UserFoodPreference
+from .models import (
+    UserFoodRestriction,
+    UserFoodPreference,
+    AbridgedBrandedFoodItem,
+    LabelNutrients,
+    Nutrient,
+    FoodNutrient,
+)
 
 
 class ResponseDetailSerializer(serializers.Serializer):
@@ -88,13 +95,13 @@ class NutrientSerializer(serializers.Serializer):
     number = serializers.CharField()
     name = serializers.CharField()
     rank = serializers.IntegerField()
-    unitName = serializers.CharField()
+    unitName = serializers.CharField(source="unit_name")
 
 
 class FoodNutrientSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     amount = serializers.FloatField()
-    dataPoints = serializers.IntegerField
+    dataPoints = serializers.IntegerField()
     min = serializers.FloatField()
     max = serializers.FloatField()
     type = serializers.CharField()
@@ -104,12 +111,12 @@ class FoodNutrientSerializer(serializers.Serializer):
 
 
 class AbridgedNutrientSerializer(serializers.Serializer):
-    number = serializers.IntegerField()
-    name = serializers.CharField()
-    amount = serializers.FloatField()
-    unitName = serializers.CharField()
-    derivationCode = serializers.CharField()
-    derivationDescription = serializers.CharField()
+    number = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+    amount = serializers.FloatField(required=False)
+    unitName = serializers.CharField(required=False)
+    derivationCode = serializers.CharField(required=False)
+    derivationDescription = serializers.CharField(required=False)
 
 
 class FoodCategorySerializer(serializers.Serializer):
@@ -203,29 +210,36 @@ class AbridgedFoodItemSerializer(serializers.Serializer):
     description = serializers.CharField()
     foodNutrients = AbridgedNutrientSerializer(many=True)
     publicationDate = serializers.DateField()
-    brandOwner = serializers.CharField()
-    gtinUpc = serializers.CharField()
-    nbdNumber = serializers.CharField()
-    foodCode = serializers.CharField()
+    brandOwner = serializers.CharField(required=False, default="")
+    gtinUpc = serializers.CharField(required=False, default="")
+    nbdNumber = serializers.CharField(required=False, default="")
+    foodCode = serializers.CharField(required=False, default="")
+
+
+class AbridgedFoodItemListSerializer(serializers.Serializer):
+    foods = AbridgedFoodItemSerializer(many=True)
 
 
 class LabelNutrientSerializer(serializers.Serializer):
     value = serializers.FloatField()
 
 
-class LableNutrientsSerializer(serializers.Serializer):
-    fat = LabelNutrientSerializer()
-    saturated_fat = LabelNutrientSerializer()
-    cholesterol = LabelNutrientSerializer()
-    sodium = LabelNutrientSerializer()
-    carbohydrates = LabelNutrientSerializer()
-    fiber = LabelNutrientSerializer()
-    sugars = LabelNutrientSerializer()
-    protein = LabelNutrientSerializer()
-    calcium = LabelNutrientSerializer()
-    iron = LabelNutrientSerializer()
-    potassium = LabelNutrientSerializer()
-    callories = LabelNutrientSerializer()
+class LabelNutrientsSerializer(serializers.Serializer):
+    fat = LabelNutrientSerializer(required=False)
+    saturatedFat = LabelNutrientSerializer(required=False, source="saturated_fat")
+    transFat = LabelNutrientSerializer(required=False, source="trans_fat")
+    cholesterol = LabelNutrientSerializer(
+        required=False,
+    )
+    sodium = LabelNutrientSerializer(required=False)
+    carbohydrates = LabelNutrientSerializer(required=False)
+    fiber = LabelNutrientSerializer(required=False)
+    sugars = LabelNutrientSerializer(required=False)
+    protein = LabelNutrientSerializer(required=False)
+    calcium = LabelNutrientSerializer(required=False)
+    iron = LabelNutrientSerializer(required=False)
+    potassium = LabelNutrientSerializer(required=False)
+    calories = LabelNutrientSerializer(required=False)
 
 
 class FoodUpdateLogSerializer(serializers.Serializer):
@@ -266,33 +280,79 @@ class BrandedFoodItemSerializer(serializers.Serializer):
     brandedFoodCategory = serializers.CharField()
     foodNutrients = FoodNutrientSerializer(many=True)
     foodUpdateLog = FoodUpdateLogSerializer(many=True)
-    labelNutrients = LableNutrientsSerializer()
+    labelNutrients = LabelNutrientsSerializer()
+
+
+class AbridgedFoodNutrientSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    amount = serializers.FloatField()
+    nutrient = NutrientSerializer()
+
+
+class AbridgedBrandedFoodSerializer(serializers.Serializer):
+    fdcId = serializers.IntegerField(source="fdc_id")
+    brandOwner = serializers.CharField(source="brand_owner")
+    description = serializers.CharField()
+    ingredients = serializers.CharField()
+    servingSize = serializers.FloatField(source="serving_size")
+    servingSizeUnit = serializers.CharField(source="serving_size_unit")
+    foodNutrients = AbridgedFoodNutrientSerializer(many=True, source="food_nutrients")
+    labelNutrients = LabelNutrientsSerializer(required=False)
+
+    def create(self, validated_data):
+        food_nutrients = validated_data.pop("food_nutrients")
+        label_nutrients = validated_data.pop("labelNutrients")
+        food, _ = AbridgedBrandedFoodItem.objects.get_or_create(**validated_data)
+        nutrients = []
+        fnutrients = []
+        for food_nutrient in food_nutrients:
+            n = food_nutrient.pop("nutrient")
+            nutrient = Nutrient(**n)
+            nutrients.append(nutrient)
+            fnutrients.append(FoodNutrient(**food_nutrient, nutrient=nutrient))
+        Nutrient.objects.bulk_create(nutrients, ignore_conflicts=True)
+
+        FoodNutrient.objects.bulk_create(fnutrients, ignore_conflicts=True)
+
+        for nutrient in fnutrients:
+            food.food_nutrients.add(nutrient)
+        print(label_nutrients)
+        for k, v in label_nutrients.items():
+            label_nutrients[k] = v["value"]
+        lnutrients = LabelNutrients.objects.create(**label_nutrients)
+        food.label_nutrients = lnutrients
+        food.save()
+        return food
+
+
+class AbridgedBrandedFoodListSerializer(serializers.Serializer):
+    foods = AbridgedBrandedFoodSerializer(many=True)
 
 
 class FoodSearchCriteriaSerializer(serializers.Serializer):
     query = serializers.CharField()
-    dataType = serializers.CharField()
-    pageSize = serializers.IntegerField()
-    pageNumber = serializers.IntegerField()
-    sortBy = serializers.CharField()
-    sortOrder = serializers.CharField()
-    brandOwner = serializers.CharField()
+    dataType = serializers.CharField(required=False)
+    pageSize = serializers.IntegerField(required=False)
+    pageNumber = serializers.IntegerField(required=False)
+    sortBy = serializers.CharField(required=False)
+    sortOrder = serializers.CharField(required=False)
+    brandOwner = serializers.CharField(required=False)
 
 
 class SearchResultFoodSerializer(serializers.Serializer):
     fdcId = serializers.IntegerField()
     dataType = serializers.CharField()
     description = serializers.CharField()
-    foodCode = serializers.CharField()
+    foodCode = serializers.CharField(required=False)
     foodNutrients = AbridgedNutrientSerializer(many=True)
-    publicationDate = serializers.DateField()
-    scientificName = serializers.CharField()
+    publicationDate = serializers.DateField(required=False)
+    scientificName = serializers.CharField(required=False)
     brandOwner = serializers.CharField()
-    gtinUpc = serializers.CharField()
+    gtinUpc = serializers.CharField(required=False)
     ingredients = serializers.CharField()
-    nbdNumber = serializers.CharField()
-    additionalDescriptions = serializers.CharField()
-    allHighlightFields = serializers.CharField()
+    nbdNumber = serializers.CharField(required=False)
+    additionalDescriptions = serializers.CharField(required=False)
+    allHighlightFields = serializers.CharField(required=False)
     score = serializers.FloatField()
 
 
