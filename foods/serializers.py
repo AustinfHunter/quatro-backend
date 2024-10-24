@@ -111,12 +111,12 @@ class FoodNutrientSerializer(serializers.Serializer):
 
 
 class AbridgedNutrientSerializer(serializers.Serializer):
-    number = serializers.IntegerField()
-    name = serializers.CharField()
-    amount = serializers.FloatField()
-    unitName = serializers.CharField()
-    derivationCode = serializers.CharField()
-    derivationDescription = serializers.CharField()
+    number = serializers.IntegerField(required=False)
+    name = serializers.CharField(required=False)
+    amount = serializers.FloatField(required=False)
+    unitName = serializers.CharField(required=False)
+    derivationCode = serializers.CharField(required=False)
+    derivationDescription = serializers.CharField(required=False)
 
 
 class FoodCategorySerializer(serializers.Serializer):
@@ -331,28 +331,28 @@ class AbridgedBrandedFoodListSerializer(serializers.Serializer):
 
 class FoodSearchCriteriaSerializer(serializers.Serializer):
     query = serializers.CharField()
-    dataType = serializers.CharField()
-    pageSize = serializers.IntegerField()
-    pageNumber = serializers.IntegerField()
-    sortBy = serializers.CharField()
-    sortOrder = serializers.CharField()
-    brandOwner = serializers.CharField()
+    dataType = serializers.CharField(required=False)
+    pageSize = serializers.IntegerField(required=False)
+    pageNumber = serializers.IntegerField(required=False)
+    sortBy = serializers.CharField(required=False)
+    sortOrder = serializers.CharField(required=False)
+    brandOwner = serializers.CharField(required=False)
 
 
 class SearchResultFoodSerializer(serializers.Serializer):
     fdcId = serializers.IntegerField()
     dataType = serializers.CharField()
     description = serializers.CharField()
-    foodCode = serializers.CharField()
+    foodCode = serializers.CharField(required=False)
     foodNutrients = AbridgedNutrientSerializer(many=True)
-    publicationDate = serializers.DateField()
-    scientificName = serializers.CharField()
+    publicationDate = serializers.DateField(required=False)
+    scientificName = serializers.CharField(required=False)
     brandOwner = serializers.CharField()
-    gtinUpc = serializers.CharField()
+    gtinUpc = serializers.CharField(required=False)
     ingredients = serializers.CharField()
-    nbdNumber = serializers.CharField()
-    additionalDescriptions = serializers.CharField()
-    allHighlightFields = serializers.CharField()
+    nbdNumber = serializers.CharField(required=False)
+    additionalDescriptions = serializers.CharField(required=False)
+    allHighlightFields = serializers.CharField(required=False)
     score = serializers.FloatField()
 
 

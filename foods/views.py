@@ -14,6 +14,7 @@ from .serializers import (
     UserFoodPreferenceListSerializer,
     UserFoodRestrictionListSerializer,
     ResponseDetailSerializer,
+    SearchResultSerializer,
 )
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
@@ -209,3 +210,13 @@ class UserFoodRestrictionListView(APIView):
             UserFoodPreferenceListSerializer({"restrictions": restrictions}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class FoodSearchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: SearchResultSerializer})
+    def get(self, request, query: str):
+        results = fdc_client.search(query)
+        print(results)
+        return Response(SearchResultSerializer(results).data, status=status.HTTP_200_OK)
