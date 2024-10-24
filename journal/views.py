@@ -22,7 +22,7 @@ class UserFoodJournalEntriesView(APIView):
     def get(self, request):
         entries = UserFoodJournalEntry.objects.filter(date=timezone.now().date())
         return Response(
-            UserFoodJournalEntryListSerializer({"journal_entries": entries}),
+            UserFoodJournalEntryListSerializer({"journal_entries": entries}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -32,27 +32,27 @@ class CreateUserFoodJournalEntryView(APIView):
         request=UserFoodJournalEntryDTOSerializer,
         responses={
             200: UserFoodJournalEntrySerializer,
-        }
+        },
     )
     def post(self, request):
         serializer = UserFoodJournalEntryDTOSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user
             food = get_or_create_food(serializer.validated_data["fdc_id"])
+            print(food)
             date = timezone.now().date()
             amount_consumed = serializer.validated_data["amount_consumed_grams"]
-            response = UserFoodJournalEntrySerializer(
-                {
-                    "user": user,
-                    "food": food,
-                    "date": date,
-                    "amount_consumed_grams": amount_consumed,
-                }
+            result = UserFoodJournalEntry(
+                user=user, food=food, date=date, amount_consumed_grams=amount_consumed
             )
-            response.save()
-            return Response(response, status=status.HTTP_201_CREATED)
+            result.save()
+            return Response(
+                UserFoodJournalEntrySerializer(result).data, status=status.HTTP_201_CREATED
+            )
+        else:
+            print(serializer.errors)
         return Response(
-            ResponseDetailSerializer({"detail": "Could not create journal entry"}),
+            ResponseDetailSerializer({"detail": "Could not create journal entry"}).data,
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -77,5 +77,9 @@ class UserDashboardView(APIView):
     def get(self, request):
         entries = UserFoodJournalEntry.objects.filter(date=timezone.now().date())
         return Response(
-            UserDashboardSerializer({"journal_entries": entries}), status=status.HTTP_200_OK
+            UserDashboardSerializer(
+                {"journal_entries": entries},
+                context={"user": request.user, "date": timezone.now().date()},
+            ).data,
+            status=status.HTTP_200_OK,
         )

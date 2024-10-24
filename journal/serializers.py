@@ -31,10 +31,8 @@ class UserDashboardSerializer(serializers.Serializer):
     def get_daily_macros(self, obj) -> UserDailyMacrosSerializer:
         user = self.context.get("user")
         date = self.context.get("date")
-        entries = UserFoodJournalEntry.objects.filter(user=user, date=date).values_list(
-            "food", "amount_consumed_grams"
-        )
-
+        entries = UserFoodJournalEntry.objects.filter(user=user, date=date)
+        print(entries)
         total_calories = 0.0
         total_carbs = 0.0
         total_fat = 0.0
@@ -44,8 +42,8 @@ class UserDashboardSerializer(serializers.Serializer):
             cal_amount = nutrients.get(nutrient__name="Energy").amount
             carbs_amount = nutrients.get(nutrient__name="Carbohydrate, by difference").amount
             fat_amount = nutrients.get(nutrient__name="Total lipid (fat)").amount
-            protein_amount = nutrients.get(nutrient__name="Protein")
-
+            protein_amount = nutrients.get(nutrient__name="Protein").amount
+            print(nutrients)
             total_calories += (cal_amount / 100) * entry.amount_consumed_grams
             total_carbs += (carbs_amount / 100) * entry.amount_consumed_grams
             total_fat += (fat_amount / 100) * entry.amount_consumed_grams
@@ -57,4 +55,4 @@ class UserDashboardSerializer(serializers.Serializer):
                 "total_fat": total_fat,
                 "total_protein": total_protein,
             }
-        )
+        ).data
