@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView, Response
 from rest_framework import status, permissions
 from .serializers import (
@@ -8,6 +9,7 @@ from .serializers import (
     UserDashboardSerializer,
 )
 from .models import UserFoodJournalEntry
+from .permissions import IsJournalEntryOwner
 from foods.util import get_or_create_food
 from foods.serializers import ResponseDetailSerializer
 from drf_spectacular.utils import extend_schema
@@ -61,15 +63,60 @@ class CreateUserFoodJournalEntryView(APIView):
         )
 
 
-class ModifyUserFoodJournalEntryView(APIView):
-    def post(self, request):
-        pass
+class UserFoodJournalEntryView(APIView):
+    permission_classes = [IsJournalEntryOwner]
 
-    def put(self, request):
-        pass
+    @extend_schema(
+        responses={
+            200: UserFoodJournalEntrySerializer,
+            403: ResponseDetailSerializer,
+            404: ResponseDetailSerializer,
+        }
+    )
+    def get(self, request, id):
+        entry = get_object_or_404(UserFoodJournalEntry, id=id)
+        return Response(UserFoodJournalEntrySerializer(entry).data)
 
-    def delete(self, request):
-        pass
+    @extend_schema(
+        request=UserFoodJournalEntryDTOSerializer,
+        responses={
+            202: UserFoodJournalEntrySerializer,
+            400: ResponseDetailSerializer,
+            403: ResponseDetailSerializer,
+        },
+    )
+    def put(self, request, id):
+        serializer = UserFoodJournalEntryDTOSerializer(data=request.data)
+        if serializer.is_valid():
+            entry: UserFoodJournalEntry = get_object_or_404(
+                UserFoodJournalEntry,
+                id=id,
+                date=serializer.validated_data.get("date", timezone.now().date()),
+            )
+            entry.amount_consumed_grams = serializer.validated_data.get("amount_consumed_grams")
+            entry.save()
+            return Response(
+                UserFoodJournalEntrySerializer(entry).data, status=status.HTTP_202_ACCEPTED
+            )
+        return Response(
+            ResponseDetailSerializer({"detail": "Could not update journal entry"}).data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @extend_schema(
+        responses={
+            202: ResponseDetailSerializer,
+            403: ResponseDetailSerializer,
+            404: ResponseDetailSerializer,
+        }
+    )
+    def delete(self, request, id):
+        entry = get_object_or_404(UserFoodJournalEntry, id=id)
+        entry.delete()
+        return Response(
+            ResponseDetailSerializer({"detail": "Successfully deleted journal entry"}).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class UserDashboardView(APIView):
@@ -81,7 +128,7 @@ class UserDashboardView(APIView):
         }
     )
     def get(self, request):
-        entries = UserFoodJournalEntry.objects.filter(date=timezone.now().date())
+        entries = UserFoodJournalEntry.objects.filter(date=timezone.now().date(), user=request.user)
         return Response(
             UserDashboardSerializer(
                 {"journal_entries": entries},
