@@ -64,7 +64,7 @@ class CreateUserFoodJournalEntryView(APIView):
 
 
 class UserFoodJournalEntryView(APIView):
-    permission_classes = [IsJournalEntryOwner]
+    permission_classes = [permissions.IsAuthenticated & IsJournalEntryOwner]
 
     @extend_schema(
         responses={
