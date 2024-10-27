@@ -1,16 +1,21 @@
 from rest_framework import serializers
 from .models import UserFoodJournalEntry
+from foods.serializers import AbridgedBrandedFoodSerializer
 
 
 class UserFoodJournalEntrySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    food = AbridgedBrandedFoodSerializer()
+
     class Meta:
         model = UserFoodJournalEntry
-        fields = "__all__"
+        fields = ["id", "user", "date", "amount_consumed_grams", "food"]
 
 
 class UserFoodJournalEntryDTOSerializer(serializers.Serializer):
     fdc_id = serializers.IntegerField()
     amount_consumed_grams = serializers.FloatField()
+    date = serializers.DateField(required=False)
 
 
 class UserFoodJournalEntryListSerializer(serializers.Serializer):
