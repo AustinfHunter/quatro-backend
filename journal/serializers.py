@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import UserFoodJournalEntry
 from foods.serializers import AbridgedBrandedFoodSerializer
 from .util import getNutrientAmountOrZero
+from django.utils import timezone
 
 
 class UserFoodJournalEntrySerializer(serializers.ModelSerializer):
@@ -11,6 +12,10 @@ class UserFoodJournalEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = UserFoodJournalEntry
         fields = ["id", "user", "date", "amount_consumed_grams", "food"]
+
+
+class EntriesRequestSerializer(serializers.Serializer):
+    date = serializers.DateField(default=timezone.now().date())
 
 
 class UserFoodJournalEntryDTOSerializer(serializers.Serializer):
