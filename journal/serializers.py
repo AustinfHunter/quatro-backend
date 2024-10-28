@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import UserFoodJournalEntry
 from foods.serializers import AbridgedBrandedFoodSerializer
+from .util import getNutrientAmountOrZero
 
 
 class UserFoodJournalEntrySerializer(serializers.ModelSerializer):
@@ -44,11 +45,12 @@ class UserDashboardSerializer(serializers.Serializer):
         total_protein = 0.0
         for entry in entries:
             nutrients = entry.food.food_nutrients
-            cal_amount = nutrients.get(nutrient__name="Energy").amount
-            carbs_amount = nutrients.get(nutrient__name="Carbohydrate, by difference").amount
-            fat_amount = nutrients.get(nutrient__name="Total lipid (fat)").amount
-            protein_amount = nutrients.get(nutrient__name="Protein").amount
-            print(nutrients)
+            cal_amount = getNutrientAmountOrZero(nutrients, nutrient_name="Energy")
+            carbs_amount = getNutrientAmountOrZero(
+                nutrients, nutrient_name="Carbohydrate, by difference"
+            )
+            fat_amount = getNutrientAmountOrZero(nutrients, nutrient_name="Total lipid (fat)")
+            protein_amount = getNutrientAmountOrZero(nutrients, nutrient_name="Protein")
             total_calories += (cal_amount / 100) * entry.amount_consumed_grams
             total_carbs += (carbs_amount / 100) * entry.amount_consumed_grams
             total_fat += (fat_amount / 100) * entry.amount_consumed_grams

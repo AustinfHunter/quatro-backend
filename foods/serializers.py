@@ -329,6 +329,16 @@ class AbridgedBrandedFoodListSerializer(serializers.Serializer):
     foods = AbridgedBrandedFoodSerializer(many=True)
 
 
+class SearchResultNutrientSerializer(serializers.Serializer):
+    nutrientId = serializers.IntegerField()
+    nutrientNumber = serializers.IntegerField()
+    nutrientName = serializers.CharField()
+    value = serializers.FloatField()
+    unitName = serializers.CharField()
+    derivationCode = serializers.CharField()
+    derivationDescription = serializers.CharField()
+
+
 class FoodSearchCriteriaSerializer(serializers.Serializer):
     query = serializers.CharField()
     dataType = serializers.CharField(required=False)
@@ -344,7 +354,7 @@ class SearchResultFoodSerializer(serializers.Serializer):
     dataType = serializers.CharField()
     description = serializers.CharField()
     foodCode = serializers.CharField(required=False)
-    foodNutrients = AbridgedNutrientSerializer(many=True)
+    foodNutrients = SearchResultNutrientSerializer(many=True, required=False)
     publicationDate = serializers.DateField(required=False)
     scientificName = serializers.CharField(required=False)
     brandOwner = serializers.CharField()
