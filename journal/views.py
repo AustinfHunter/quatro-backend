@@ -36,7 +36,10 @@ class UserFoodJournalEntriesView(APIView):
                 UserFoodJournalEntryListSerializer({"journal_entries": entries}).data,
                 status=status.HTTP_200_OK,
             )
-        return Response(ResponseDetailSerializer({"detail": "Could not get journal entries"}).data, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            ResponseDetailSerializer({"detail": "Could not get journal entries"}).data,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class CreateUserFoodJournalEntryView(APIView):
@@ -141,6 +144,21 @@ class UserDashboardView(APIView):
             UserDashboardSerializer(
                 {"journal_entries": entries},
                 context={"user": request.user, "date": timezone.now().date()},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class HistoricalUserDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: UserDashboardView})
+    def get(self, request, date):
+        entries = UserFoodJournalEntry.objects.filter(date=date, user=request.user)
+        return Response(
+            UserDashboardSerializer(
+                {"journal_entries": entries},
+                context={"user": request.user, "date": date},
             ).data,
             status=status.HTTP_200_OK,
         )
