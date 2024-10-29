@@ -56,8 +56,7 @@ class CreateUserFoodJournalEntryView(APIView):
         if serializer.is_valid():
             user = request.user
             food = get_or_create_food(serializer.validated_data["fdc_id"])
-            print(food)
-            date = timezone.now().date()
+            date = serializer.validated_data.get("date", timezone.now().date())
             amount_consumed = serializer.validated_data["amount_consumed_grams"]
             result = UserFoodJournalEntry(
                 user=user, food=food, date=date, amount_consumed_grams=amount_consumed
