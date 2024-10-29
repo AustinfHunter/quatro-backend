@@ -291,11 +291,11 @@ class AbridgedFoodNutrientSerializer(serializers.Serializer):
 
 class AbridgedBrandedFoodSerializer(serializers.Serializer):
     fdcId = serializers.IntegerField(source="fdc_id")
-    brandOwner = serializers.CharField(source="brand_owner")
-    description = serializers.CharField()
-    ingredients = serializers.CharField()
+    brandOwner = serializers.CharField(source="brand_owner", allow_blank=True)
+    description = serializers.CharField(allow_blank=True)
+    ingredients = serializers.CharField(allow_blank=True)
     servingSize = serializers.FloatField(source="serving_size")
-    servingSizeUnit = serializers.CharField(source="serving_size_unit")
+    servingSizeUnit = serializers.CharField(source="serving_size_unit", allow_blank=True)
     foodNutrients = AbridgedFoodNutrientSerializer(many=True, source="food_nutrients")
     labelNutrients = LabelNutrientsSerializer(required=False)
 
