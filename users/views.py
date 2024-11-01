@@ -67,7 +67,7 @@ class FitnessProfileView(APIView):
         request=UserFitnessProfileSerializer,
         responses={200: UserFitnessProfileSerializer, 404: ResponseDetailSerializer},
     )
-    def put(self, request, fitness_profile_id):
+    def put(self, request):
         serializer = UserFitnessProfileSerializer(data=request.data, context={"user": request.user})
         if serializer.is_valid():
             fitness_profile = serializer.save()

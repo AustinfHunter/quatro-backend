@@ -1,12 +1,8 @@
 from rest_framework import serializers
 from .models import UserFoodJournalEntry
 from foods.serializers import AbridgedBrandedFoodSerializer
-<<<<<<< HEAD
 from users.models import UserFitnessProfile
-=======
-from .util import getNutrientAmountOrZero
 from django.utils import timezone
->>>>>>> main
 
 
 class UserFoodJournalEntrySerializer(serializers.ModelSerializer):
