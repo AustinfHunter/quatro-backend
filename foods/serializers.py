@@ -291,11 +291,11 @@ class AbridgedFoodNutrientSerializer(serializers.Serializer):
 
 class AbridgedBrandedFoodSerializer(serializers.Serializer):
     fdcId = serializers.IntegerField(source="fdc_id")
-    brandOwner = serializers.CharField(source="brand_owner")
-    description = serializers.CharField()
-    ingredients = serializers.CharField()
+    brandOwner = serializers.CharField(source="brand_owner", allow_blank=True)
+    description = serializers.CharField(allow_blank=True)
+    ingredients = serializers.CharField(allow_blank=True)
     servingSize = serializers.FloatField(source="serving_size")
-    servingSizeUnit = serializers.CharField(source="serving_size_unit")
+    servingSizeUnit = serializers.CharField(source="serving_size_unit", allow_blank=True)
     foodNutrients = AbridgedFoodNutrientSerializer(many=True, source="food_nutrients")
     labelNutrients = LabelNutrientsSerializer(required=False)
 
@@ -329,6 +329,16 @@ class AbridgedBrandedFoodListSerializer(serializers.Serializer):
     foods = AbridgedBrandedFoodSerializer(many=True)
 
 
+class SearchResultNutrientSerializer(serializers.Serializer):
+    nutrientId = serializers.IntegerField()
+    nutrientNumber = serializers.IntegerField()
+    nutrientName = serializers.CharField()
+    value = serializers.FloatField()
+    unitName = serializers.CharField()
+    derivationCode = serializers.CharField()
+    derivationDescription = serializers.CharField()
+
+
 class FoodSearchCriteriaSerializer(serializers.Serializer):
     query = serializers.CharField()
     dataType = serializers.CharField(required=False)
@@ -344,7 +354,7 @@ class SearchResultFoodSerializer(serializers.Serializer):
     dataType = serializers.CharField()
     description = serializers.CharField()
     foodCode = serializers.CharField(required=False)
-    foodNutrients = AbridgedNutrientSerializer(many=True)
+    foodNutrients = SearchResultNutrientSerializer(many=True, required=False)
     publicationDate = serializers.DateField(required=False)
     scientificName = serializers.CharField(required=False)
     brandOwner = serializers.CharField()

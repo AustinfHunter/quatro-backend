@@ -21,19 +21,19 @@ class UserFoodPreference(models.Model):
 
 
 class LabelNutrients(models.Model):
-    fat = models.FloatField()
-    saturated_fat = models.FloatField()
-    trans_fat = models.FloatField()
-    cholesterol = models.FloatField()
-    sodium = models.FloatField()
-    carbohydrates = models.FloatField()
-    fiber = models.FloatField()
-    sugars = models.FloatField()
-    protein = models.FloatField()
-    calcium = models.FloatField()
-    iron = models.FloatField()
-    potassium = models.FloatField()
-    calories = models.FloatField()
+    fat = models.FloatField(default=0.0)
+    saturated_fat = models.FloatField(default=0.0)
+    trans_fat = models.FloatField(default=0.0)
+    cholesterol = models.FloatField(default=0.0)
+    sodium = models.FloatField(default=0.0)
+    carbohydrates = models.FloatField(default=0.0)
+    fiber = models.FloatField(default=0.0)
+    sugars = models.FloatField(default=0.0)
+    protein = models.FloatField(default=0.0)
+    calcium = models.FloatField(default=0.0)
+    iron = models.FloatField(default=0.0)
+    potassium = models.FloatField(default=0.0)
+    calories = models.FloatField(default=0.0)
 
 
 class Nutrient(models.Model):
