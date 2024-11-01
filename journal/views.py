@@ -5,6 +5,7 @@ from rest_framework import status, permissions
 from .serializers import (
     UserFoodJournalEntryDTOSerializer,
     UserFoodJournalEntrySerializer,
+    EntriesRequestSerializer,
     UserFoodJournalEntryListSerializer,
     UserDashboardSerializer,
 )
@@ -19,15 +20,25 @@ class UserFoodJournalEntriesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
+        request=EntriesRequestSerializer,
         responses={
             200: UserFoodJournalEntryListSerializer,
-        }
+            400: ResponseDetailSerializer,
+        },
     )
     def get(self, request):
-        entries = UserFoodJournalEntry.objects.filter(date=timezone.now().date())
+        serializer = EntriesRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            entries = UserFoodJournalEntry.objects.filter(
+                date=serializer.validated_data.get("date")
+            )
+            return Response(
+                UserFoodJournalEntryListSerializer({"journal_entries": entries}).data,
+                status=status.HTTP_200_OK,
+            )
         return Response(
-            UserFoodJournalEntryListSerializer({"journal_entries": entries}).data,
-            status=status.HTTP_200_OK,
+            ResponseDetailSerializer({"detail": "Could not get journal entries"}).data,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -45,8 +56,7 @@ class CreateUserFoodJournalEntryView(APIView):
         if serializer.is_valid():
             user = request.user
             food = get_or_create_food(serializer.validated_data["fdc_id"])
-            print(food)
-            date = timezone.now().date()
+            date = serializer.validated_data.get("date", timezone.now().date())
             amount_consumed = serializer.validated_data["amount_consumed_grams"]
             result = UserFoodJournalEntry(
                 user=user, food=food, date=date, amount_consumed_grams=amount_consumed
@@ -133,6 +143,21 @@ class UserDashboardView(APIView):
             UserDashboardSerializer(
                 {"journal_entries": entries},
                 context={"user": request.user, "date": timezone.now().date()},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class HistoricalUserDashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: UserDashboardView})
+    def get(self, request, date):
+        entries = UserFoodJournalEntry.objects.filter(date=date, user=request.user)
+        return Response(
+            UserDashboardSerializer(
+                {"journal_entries": entries},
+                context={"user": request.user, "date": date},
             ).data,
             status=status.HTTP_200_OK,
         )

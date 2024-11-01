@@ -8,7 +8,7 @@ class FdcClient:
     def __init__(self, apikey):
         self.key = apikey
 
-    def get_food(self, fdc_ids: list[int], format: str = "abridged", nutrients: list[str] = None):
+    def get_food(self, fdc_ids: list[int], format: str = "full", nutrients: list[str] = None):
         if nutrients == None:
             params = {"fdcIds": fdc_ids, "format": format, "api_key": self.key}
         else:
