@@ -15,7 +15,9 @@ from .serializers import (
     UserFoodRestrictionListSerializer,
     ResponseDetailSerializer,
     SearchResultSerializer,
+    UserFoodDetailsSerializer,
 )
+from .util import get_or_create_food
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -98,13 +100,15 @@ class CreateUserFoodPreferenceView(APIView):
             400: ResponseDetailSerializer,
         },
     )
-    def post(self, request):
-        prefDTO = UserFoodPreferencesDTOSerializer(data=request.data, context={"request": request})
+    def post(self, request, fdc_id):
+        food = get_or_create_food(fdc_id)
+        prefDTO = UserFoodPreferencesDTOSerializer(
+            data=request.data, context={"request": request, "food": food}
+        )
         if prefDTO.is_valid():
             exists = UserFoodPreference.objects.filter(
                 user=request.user, fdc_id=prefDTO.validated_data["fdc_id"]
             ).exists()
-
             if exists:
                 return Response(
                     ResponseDetailSerializer({"message": "Preference already exists"}).data,
@@ -176,7 +180,11 @@ class CreateUserFoodRestrictionView(APIView):
             400: ResponseDetailSerializer,
         },
     )
-    def post(self, request):
+    def post(self, request, fdc_id):
+        food = get_or_create_food(fdc_id)
+        prefDTO = UserFoodPreferencesDTOSerializer(
+            data=request.data, context={"request": request, "food": food}
+        )
         prefDTO = UserFoodRestrictionDTOSerializer(data=request.data, context={"request": request})
         if prefDTO.is_valid():
             exists = UserFoodRestriction.objects.filter(
@@ -218,5 +226,32 @@ class FoodSearchView(APIView):
     @extend_schema(responses={200: SearchResultSerializer})
     def get(self, request, query: str):
         results = fdc_client.search(query)
-        print(results)
         return Response(SearchResultSerializer(results).data, status=status.HTTP_200_OK)
+
+
+class FoodDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: UserFoodDetailsSerializer, 403: ResponseDetailSerializer})
+    def get(self, request, fdc_id):
+        food_details = get_object_or_404(AbridgedBrandedFoodItem, fdc_id=fdc_id)
+        is_liked = UserFoodPreference.objects.filter(
+            user=request.user, food__fdc_id=fdc_id, dislikes=False
+        ).exists()
+        is_disliked = UserFoodPreference.objects.filter(
+            user=request.user, food__fdc_id=fdc_id, dislikes=True
+        ).exists()
+        is_restricted = UserFoodRestriction.objects.filter(
+            user=request.user, food__fdc_id=fdc_id
+        ).exists()
+        return Response(
+            UserFoodDetailsSerializer(
+                {
+                    "food_details": food_details,
+                    "is_liked": is_liked,
+                    "is_disliked": is_disliked,
+                    "is_restricted": is_restricted,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )

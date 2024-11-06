@@ -13,52 +13,6 @@ class ResponseDetailSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 
-class UserFoodRestrictionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserFoodRestriction
-        fields = "__all__"
-
-
-class UserFoodRestrictionListSerializer(serializers.Serializer):
-    restrictions = UserFoodRestrictionSerializer(many=True)
-
-
-class UserFoodRestrictionDTOSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserFoodRestriction
-        fields = ["fdc_id", "reason"]
-
-    def create(self, validated_data):
-        user = self.context["request"].user
-        restriction = UserFoodRestriction.objects.create(
-            user=user, fdc_id=validated_data["fdc_id"], reason=validated_data["reason"]
-        )
-        return restriction
-
-
-class UserFoodPreferenceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserFoodPreference
-        fields = "__all__"
-
-
-class UserFoodPreferenceListSerializer(serializers.Serializer):
-    preferences = UserFoodPreferenceSerializer(many=True)
-
-
-class UserFoodPreferencesDTOSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserFoodPreference
-        fields = ["fdc_id", "dislikes"]
-
-    def create(self, validated_data):
-        user = self.context["request"].user
-        preference = UserFoodPreference.objects.create(
-            user=user, fdc_id=validated_data["fdc_id"], dislikes=validated_data["dislikes"]
-        )
-        return preference
-
-
 class NutrientAcquisitionDetailsSerializer(serializers.Serializer):
     sampleUnitId = serializers.IntegerField()
     purchaseDate = serializers.DateField()
@@ -372,3 +326,68 @@ class SearchResultSerializer(serializers.Serializer):
     currentPage = serializers.IntegerField()
     totalPages = serializers.IntegerField()
     foods = SearchResultFoodSerializer(many=True)
+
+
+class UserFoodRestrictionSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserFoodRestriction
+        fields = "__all__"
+
+    def get_food_details(self, obj) -> AbridgedBrandedFoodSerializer:
+        return AbridgedBrandedFoodSerializer(data=obj.food).data
+
+
+class UserFoodRestrictionListSerializer(serializers.Serializer):
+    restrictions = UserFoodRestrictionSerializer(many=True)
+
+
+class UserFoodRestrictionDTOSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserFoodRestriction
+        fields = ["reason"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        food = self.context["food"]
+        restriction = UserFoodRestriction.objects.create(
+            user=user, food=food, reason=validated_data["reason"]
+        )
+        return restriction
+
+
+class UserFoodPreferenceSerializer(serializers.ModelSerializer):
+    food_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserFoodPreference
+        fields = "__all__"
+
+    def get_food_details(self, obj) -> AbridgedBrandedFoodSerializer:
+        return AbridgedBrandedFoodSerializer(data=obj.food).data
+
+
+class UserFoodPreferenceListSerializer(serializers.Serializer):
+    preferences = UserFoodPreferenceSerializer(many=True)
+
+
+class UserFoodPreferencesDTOSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserFoodPreference
+        fields = ["dislikes"]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        food = self.context["food"]
+        preference = UserFoodPreference.objects.create(
+            user=user, food=food, dislikes=validated_data["dislikes"]
+        )
+        return preference
+
+
+class UserFoodDetailsSerializer(serializers.Serializer):
+    food_details = AbridgedBrandedFoodSerializer()
+    is_liked = serializers.BooleanField()
+    is_disliked = serializers.BooleanField()
+    is_restricted = serializers.BooleanField()
