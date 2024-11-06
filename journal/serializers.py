@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import UserFoodJournalEntry
 from foods.serializers import AbridgedBrandedFoodSerializer
 from users.models import UserFitnessProfile
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
 
@@ -63,7 +64,7 @@ class UserDashboardSerializer(serializers.Serializer):
             daily_cals = UserFitnessProfile.objects.get(
                 user=self.context.get("user")
             ).get_daily_cals()
-        except UserFitnessProfile.DoesNotExist():
+        except ObjectDoesNotExist:
             daily_cals = None
 
         return UserDailyMacrosSerializer(
