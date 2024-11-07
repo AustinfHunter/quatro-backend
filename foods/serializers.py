@@ -336,7 +336,9 @@ class UserFoodRestrictionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_food_details(self, obj) -> AbridgedBrandedFoodSerializer:
-        return AbridgedBrandedFoodSerializer(data=obj.food).data
+        print("obj")
+        print(obj)
+        return AbridgedBrandedFoodSerializer(obj.food).data
 
 
 class UserFoodRestrictionListSerializer(serializers.Serializer):
@@ -351,9 +353,8 @@ class UserFoodRestrictionDTOSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
         food = self.context["food"]
-        restriction = UserFoodRestriction.objects.create(
-            user=user, food=food, reason=validated_data["reason"]
-        )
+        restriction = UserFoodRestriction(user=user, food=food, reason=validated_data["reason"])
+        restriction.save()
         return restriction
 
 
@@ -365,7 +366,7 @@ class UserFoodPreferenceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_food_details(self, obj) -> AbridgedBrandedFoodSerializer:
-        return AbridgedBrandedFoodSerializer(data=obj.food).data
+        return AbridgedBrandedFoodSerializer(obj.food).data
 
 
 class UserFoodPreferenceListSerializer(serializers.Serializer):
@@ -380,9 +381,8 @@ class UserFoodPreferencesDTOSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
         food = self.context["food"]
-        preference = UserFoodPreference.objects.create(
-            user=user, food=food, dislikes=validated_data["dislikes"]
-        )
+        preference = UserFoodPreference(user=user, food=food, dislikes=validated_data["dislikes"])
+        preference.save()
         return preference
 
 
