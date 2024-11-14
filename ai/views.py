@@ -53,11 +53,20 @@ class GetChatBotResponseView(APIView):
             f"My goals are given here {fitness_prof_json}. All values are measured in metric units. "
             "If my prompt is about recipes or meal planning, refer to my preferences and restrictions "
             "when answering. Preferences, where d is the description of the food and dl is true if I "
-            f"dislike the food and false if I like it: {food_pref_json} Restrictions, where d is the "
-            f"description of the food and reason is the r is the reason for the restriction: {food_res_json}"
+            f"dislike the food and false if I like it: {food_pref_json} disliked foods should be avoided and liked "
+            "foods should only be added where appropriate for the recipe."
+            "Restrictions, where d is the description of the food and "
+            f"r is the reason for the restriction: {food_res_json}"
             "If one of my restricted foods is part of a recipe, swap it for something similar. "
             "Example: almonds instead of peanuts if peanuts are restricted. "
             "Include a calorie and macronutrient estimation at the end of the recipe. "
+            "Your response should be in the following JSON format: "
+            '{"recipe": "Detailed instructions go here, should be a markdown string", "ingredients": [{"description": eggs, "amount:" 2, "unit": "whole"}], '
+            '"est_carbs": 90, "est_fat": 20, "est_protein": 25, "est_calories": 650}'
+            "In the example above, all values with keys starting with 'est' are your estimates for the associated values. "
+            'ingredients is a list of JSON objects of the form {"description": "description of food", "amount": 5, "unit": "grams"}'
+            "Amount should be the amount of the ingredient used and unit should match the unit "
+            "given in the recipe (i.e. grams, ounces, etc.)"
         )
 
         user_prompt = serializer.validated_data["query"]
@@ -71,7 +80,10 @@ class GetChatBotResponseView(APIView):
                 {"role": "user", "content": user_prompt},
             ],
         )
+
+        print(bot_response.choices[0].message.content)
+
         return Response(
-            ChatBotResponseSerializer({"response": bot_response.choices[0].message.content}).data,
+            ChatBotResponseSerializer(json.loads(bot_response.choices[0].message.content)).data,
             status.HTTP_200_OK,
         )
