@@ -7,4 +7,5 @@ urlpatterns = [
     path("entry/<int:id>", views.UserFoodJournalEntryView.as_view()),
     path("entries/", views.UserFoodJournalEntriesView.as_view()),
     path("entries/create/", views.CreateUserFoodJournalEntryView.as_view()),
+    path("data/trend/<str:start_date>", views.UserJournalEntryTrendView.as_view()),
 ]

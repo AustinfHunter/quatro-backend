@@ -8,12 +8,14 @@ from .serializers import (
     EntriesRequestSerializer,
     UserFoodJournalEntryListSerializer,
     UserDashboardSerializer,
+    EntryTrendDataSerializer,
 )
 from .models import UserFoodJournalEntry
 from .permissions import IsJournalEntryOwner
 from foods.util import get_or_create_food
 from foods.serializers import ResponseDetailSerializer
 from drf_spectacular.utils import extend_schema
+from .util import getNutrientAmountOrZero
 
 
 class UserFoodJournalEntriesView(APIView):
@@ -142,7 +144,7 @@ class UserDashboardView(APIView):
         return Response(
             UserDashboardSerializer(
                 {"journal_entries": entries},
-                context={"user": request.user, "date": timezone.now().date()},
+                context={"user": request.user, "date": timezone.now()},
             ).data,
             status=status.HTTP_200_OK,
         )
@@ -160,4 +162,29 @@ class HistoricalUserDashboardView(APIView):
                 context={"user": request.user, "date": date},
             ).data,
             status=status.HTTP_200_OK,
+        )
+
+
+class UserJournalEntryTrendView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        responses={200: EntryTrendDataSerializer(many=True), 401: ResponseDetailSerializer}
+    )
+    def get(self, request, start_date):
+        result = {}
+        entries = UserFoodJournalEntry.objects.filter(
+            user=request.user, date__range=(start_date, timezone.now().today())
+        )
+        for entry in entries:
+            calories = getNutrientAmountOrZero(entry.food.food_nutrients, nutrient_name="Energy")
+            if entry.date in result:
+                result[entry.date]["calories"] += (calories / 100) * entry.amount_consumed_grams
+            else:
+                result[entry.date] = {
+                    "date": entry.date,
+                    "calories": (calories / 100) * entry.amount_consumed_grams,
+                }
+        return Response(
+            EntryTrendDataSerializer(result.values(), many=True).data, status=status.HTTP_200_OK
         )

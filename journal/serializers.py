@@ -68,3 +68,8 @@ class UserDashboardSerializer(serializers.Serializer):
                 "total_protein": total_protein,
             }
         ).data
+
+
+class EntryTrendDataSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    calories = serializers.FloatField()
