@@ -2,24 +2,6 @@ from django.db import models
 from users.models import User
 
 
-class UserFoodRestriction(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    fdc_id = models.IntegerField(null=True)
-    reason = models.CharField(null=True)
-
-    class Meta:
-        unique_together = ("user", "fdc_id")
-
-
-class UserFoodPreference(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    fdc_id = models.IntegerField(null=True)
-    dislikes = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ("user", "fdc_id")
-
-
 class LabelNutrients(models.Model):
     fat = models.FloatField(default=0.0)
     saturated_fat = models.FloatField(default=0.0)
@@ -59,3 +41,21 @@ class AbridgedBrandedFoodItem(models.Model):
     serving_size_unit = models.CharField()
     label_nutrients = models.OneToOneField(LabelNutrients, on_delete=models.CASCADE, null=True)
     food_nutrients = models.ManyToManyField(FoodNutrient)
+
+
+class UserFoodRestriction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    food = models.ForeignKey(AbridgedBrandedFoodItem, on_delete=models.CASCADE)
+    reason = models.CharField(null=True)
+
+    class Meta:
+        unique_together = ("user", "food")
+
+
+class UserFoodPreference(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    food = models.ForeignKey(AbridgedBrandedFoodItem, on_delete=models.CASCADE)
+    dislikes = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("user", "food")

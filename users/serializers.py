@@ -1,4 +1,4 @@
-from .models import User
+from .models import User, UserFitnessProfile
 from rest_framework import serializers
 
 
@@ -34,3 +34,49 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "first_name", "last_name"]
+
+
+class UserFitnessProfileSerializer(serializers.ModelSerializer):
+    daily_calorie_goal = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserFitnessProfile
+        fields = [
+            "age",
+            "sex",
+            "current_weight",
+            "height",
+            "goal_weight",
+            "goal_weight_velocity",
+            "activity_level",
+            "daily_calorie_goal",
+        ]
+
+    def create(self, validated_data):
+        p = UserFitnessProfile()
+        p.user = self.context.get("user")
+        p.current_weight = validated_data["current_weight"]
+        p.goal_weight = validated_data["goal_weight"]
+        p.height = validated_data["height"]
+        p.goal_weight_velocity = validated_data["goal_weight_velocity"]
+        p.sex = validated_data["sex"]
+        p.age = validated_data["age"]
+        p.activity_level = validated_data["activity_level"]
+        p.save()
+        return p
+
+    def get_daily_calorie_goal(self, obj: UserFitnessProfile) -> float:
+        if obj.sex == "male":
+            adj = 5
+        else:
+            adj = -161
+
+        bmr = 10 * obj.current_weight + 6.25 * obj.height + 5 * obj.age + adj
+        delta_cals = (obj.goal_weight_velocity * 7716.179) / 7
+
+        return bmr + delta_cals + obj.activity_level
+
+
+class AccountSerializer(serializers.Serializer):
+    user_details = UserSerializer()
+    fitness_profile = UserFitnessProfileSerializer(required=False)

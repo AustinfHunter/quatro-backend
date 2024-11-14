@@ -15,7 +15,9 @@ from .serializers import (
     UserFoodRestrictionListSerializer,
     ResponseDetailSerializer,
     SearchResultSerializer,
+    UserFoodDetailsSerializer,
 )
+from .util import get_or_create_food
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -60,7 +62,7 @@ class UserFoodPreferenceView(APIView):
         },
     )
     def put(sel, request, fdc_id):
-        pref = get_object_or_404(UserFoodPreference, user=request.user, fdc_id=fdc_id)
+        pref = get_object_or_404(UserFoodPreference, user=request.user, food__fdc_id=fdc_id)
         serializer = UserFoodPreferenceSerializer(pref, data=request.data)
 
         if serializer.is_valid():
@@ -79,10 +81,10 @@ class UserFoodPreferenceView(APIView):
         }
     )
     def delete(self, request, fdc_id):
-        preference = UserFoodPreference.objects.get(user=request.user, fdc_id=fdc_id)
+        preference = UserFoodPreference.objects.get(user=request.user, food__fdc_id=fdc_id)
         preference.delete()
         return Response(
-            ResponseDetailSerializer({"detail": "Successfully deleted preference"}),
+            ResponseDetailSerializer({"detail": "Successfully deleted preference"}).data,
             status=status.HTTP_202_ACCEPTED,
         )
 
@@ -93,26 +95,27 @@ class CreateUserFoodPreferenceView(APIView):
     @extend_schema(
         request=UserFoodPreferencesDTOSerializer,
         responses={
-            201: UserFoodPreferenceSerializer,
+            201: ResponseDetailSerializer,
             403: ResponseDetailSerializer,
             400: ResponseDetailSerializer,
         },
     )
-    def post(self, request):
-        prefDTO = UserFoodPreferencesDTOSerializer(data=request.data, context={"request": request})
+    def post(self, request, fdc_id):
+        food = get_or_create_food(fdc_id)
+        prefDTO = UserFoodPreferencesDTOSerializer(
+            data=request.data, context={"request": request, "food": food}
+        )
         if prefDTO.is_valid():
-            exists = UserFoodPreference.objects.filter(
-                user=request.user, fdc_id=prefDTO.validated_data["fdc_id"]
-            ).exists()
-
+            exists = UserFoodPreference.objects.filter(user=request.user, food=food).exists()
             if exists:
                 return Response(
-                    ResponseDetailSerializer({"message": "Preference already exists"}).data,
+                    ResponseDetailSerializer({"detail": "Preference already exists"}).data,
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            result = prefDTO.save()
+            prefDTO.save()
             return Response(
-                UserFoodPreferenceSerializer(result).data, status=status.HTTP_201_CREATED
+                ResponseDetailSerializer({"detail": "Successfully created preference"}).data,
+                status=status.HTTP_201_CREATED,
             )
         return Response(
             ResponseDetailSerializer({"detail": "Failed to create preference"}).data,
@@ -144,7 +147,7 @@ class UserFoodRestrictionView(APIView):
         },
     )
     def put(sel, request, fdc_id):
-        restriction = get_object_or_404(UserFoodRestriction, user=request.user, fdc_id=fdc_id)
+        restriction = get_object_or_404(UserFoodRestriction, user=request.user, food__fdc_id=fdc_id)
         serializer = UserFoodRestrictionSerializer(restriction, data=request.data)
 
         if serializer.is_valid():
@@ -157,7 +160,7 @@ class UserFoodRestrictionView(APIView):
 
     @extend_schema(responses={202: ResponseDetailSerializer, 404: ResponseDetailSerializer})
     def delete(self, request, fdc_id):
-        restriction = get_object_or_404(UserFoodRestriction, user=request.user, fdc_id=fdc_id)
+        restriction = get_object_or_404(UserFoodRestriction, user=request.user, food__fdc_id=fdc_id)
         restriction.delete()
         return Response(
             ResponseDetailSerializer({"detail": "Successfully deleted preference"}).data,
@@ -171,26 +174,28 @@ class CreateUserFoodRestrictionView(APIView):
     @extend_schema(
         request=UserFoodRestrictionDTOSerializer,
         responses={
-            201: UserFoodRestrictionSerializer,
+            201: ResponseDetailSerializer,
             403: ResponseDetailSerializer,
             400: ResponseDetailSerializer,
         },
     )
-    def post(self, request):
-        prefDTO = UserFoodRestrictionDTOSerializer(data=request.data, context={"request": request})
-        if prefDTO.is_valid():
-            exists = UserFoodRestriction.objects.filter(
-                user=request.user, fdc_id=prefDTO.validated_data["fdc_id"]
-            ).exists()
+    def post(self, request, fdc_id):
+        food = get_or_create_food(fdc_id)
+        resDTO = UserFoodRestrictionDTOSerializer(
+            data=request.data, context={"request": request, "food": food}
+        )
+        if resDTO.is_valid():
+            exists = UserFoodRestriction.objects.filter(user=request.user, food=food).exists()
 
             if exists:
                 return Response(
                     ResponseDetailSerializer({"detail": "Preference already exists"}).data,
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            result = prefDTO.save()
+            resDTO.save()
             return Response(
-                UserFoodRestrictionSerializer(result).data, status=status.HTTP_201_CREATED
+                ResponseDetailSerializer({"detail": "Successfully created restriction"}).data,
+                status=status.HTTP_201_CREATED,
             )
         return Response(
             ResponseDetailSerializer({"detail": "Failed to create preference"}).data,
@@ -207,7 +212,7 @@ class UserFoodRestrictionListView(APIView):
     def get(self, request):
         restrictions = UserFoodRestriction.objects.filter(user=request.user)
         return Response(
-            UserFoodPreferenceListSerializer({"restrictions": restrictions}).data,
+            UserFoodRestrictionListSerializer({"restrictions": restrictions}).data,
             status=status.HTTP_200_OK,
         )
 
@@ -218,5 +223,32 @@ class FoodSearchView(APIView):
     @extend_schema(responses={200: SearchResultSerializer})
     def get(self, request, query: str):
         results = fdc_client.search(query)
-        print(results)
         return Response(SearchResultSerializer(results).data, status=status.HTTP_200_OK)
+
+
+class FoodDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(responses={200: UserFoodDetailsSerializer, 403: ResponseDetailSerializer})
+    def get(self, request, fdc_id):
+        food_details = get_or_create_food(fdc_id)
+        is_liked = UserFoodPreference.objects.filter(
+            user=request.user, food__fdc_id=fdc_id, dislikes=False
+        ).exists()
+        is_disliked = UserFoodPreference.objects.filter(
+            user=request.user, food__fdc_id=fdc_id, dislikes=True
+        ).exists()
+        is_restricted = UserFoodRestriction.objects.filter(
+            user=request.user, food__fdc_id=fdc_id
+        ).exists()
+        return Response(
+            UserFoodDetailsSerializer(
+                {
+                    "food_details": food_details,
+                    "is_liked": is_liked,
+                    "is_disliked": is_disliked,
+                    "is_restricted": is_restricted,
+                }
+            ).data,
+            status=status.HTTP_200_OK,
+        )
