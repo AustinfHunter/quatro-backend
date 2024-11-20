@@ -76,3 +76,8 @@ class UserDashboardSerializer(serializers.Serializer):
                 "daily_calorie_limit": daily_cals,
             }
         ).data
+
+
+class EntryTrendDataSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    calories = serializers.FloatField()
