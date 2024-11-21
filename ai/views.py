@@ -57,16 +57,17 @@ class GetChatBotResponseView(APIView):
             "foods should only be added where appropriate for the recipe."
             "Restrictions, where d is the description of the food and "
             f"r is the reason for the restriction: {food_res_json}"
-            "If one of my restricted foods is part of a recipe, swap it for something similar. "
+            "If one of my restricted foods is part of a recipe, substitute it for something similar. "
             "Example: almonds instead of peanuts if peanuts are restricted. "
             "Include a calorie and macronutrient estimation at the end of the recipe. "
             "Your response should be in the following JSON format: "
-            '{"recipe": "Detailed instructions go here, should be a markdown string", "ingredients": [{"description": eggs, "amount:" 2, "unit": "whole"}], '
+            '{"recipe": "Detailed instructions go here", "ingredients": [{"description": eggs, "amount:" 2, "unit": "whole"}], '
             '"est_carbs": 90, "est_fat": 20, "est_protein": 25, "est_calories": 650}'
             "In the example above, all values with keys starting with 'est' are your estimates for the associated values. "
             'ingredients is a list of JSON objects of the form {"description": "description of food", "amount": 5, "unit": "grams"}'
             "Amount should be the amount of the ingredient used and unit should match the unit "
             "given in the recipe (i.e. grams, ounces, etc.)"
+            "The Recipe must be markdown."
         )
 
         user_prompt = serializer.validated_data["query"]
