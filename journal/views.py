@@ -178,12 +178,25 @@ class UserJournalEntryTrendView(APIView):
         )
         for entry in entries:
             calories = getNutrientAmountOrZero(entry.food.food_nutrients, nutrient_name="Energy")
+            protein = getNutrientAmountOrZero(entry.food.food_nutrients, nutrient_name="Protein")
+            fat = getNutrientAmountOrZero(
+                entry.food.food_nutrients, nutrient_name="Total lipid (fat)"
+            )
+            carbs = getNutrientAmountOrZero(
+                entry.food.food_nutrients, nutrient_name="Carbohydrate, by difference"
+            )
             if entry.date in result:
                 result[entry.date]["calories"] += (calories / 100) * entry.amount_consumed_grams
+                result[entry.date]["protein"] += (protein / 100) * entry.amount_consumed_grams
+                result[entry.date]["fat"] += (fat / 100) * entry.amount_consumed_grams
+                result[entry.date]["carbs"] += (carbs / 100) * entry.amount_consumed_grams
             else:
                 result[entry.date] = {
                     "date": entry.date,
                     "calories": (calories / 100) * entry.amount_consumed_grams,
+                    "protein": (protein / 100) * entry.amount_consumed_grams,
+                    "fat": (fat / 100) * entry.amount_consumed_grams,
+                    "carbs": (carbs / 100) * entry.amount_consumed_grams,
                 }
         return Response(
             EntryTrendDataSerializer(result.values(), many=True).data, status=status.HTTP_200_OK

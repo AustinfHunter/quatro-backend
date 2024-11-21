@@ -81,3 +81,6 @@ class UserDashboardSerializer(serializers.Serializer):
 class EntryTrendDataSerializer(serializers.Serializer):
     date = serializers.DateField()
     calories = serializers.FloatField()
+    protein = serializers.FloatField()
+    fat = serializers.FloatField()
+    carbs = serializers.FloatField()
