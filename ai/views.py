@@ -62,7 +62,7 @@ class GetChatBotResponseView(APIView):
             "Example: almonds instead of peanuts if peanuts are restricted. "
             "Include a calorie and macronutrient estimation at the end of the recipe. "
             "Your response must be in the following JSON format: "
-            '{type: "recipe", "recipe": "Detailed instructions go here", "ingredients": [{"description": eggs, "amount:" 2, "unit": "whole"}], '
+            '{"type": "recipe", "recipe": "Detailed instructions go here", "ingredients": [{"description": eggs, "amount:" 2, "unit": "whole"}], '
             '"est_carbs": 90, "est_fat": 20, "est_protein": 25, "est_calories": 650}'
             "Do not include any text before the valid JSON. The message should start with the opening bracket of the JSON response. "
             "Remember to make the recipe valid markdown. "
@@ -71,9 +71,9 @@ class GetChatBotResponseView(APIView):
             "Amount should be the amount of the ingredient used and unit should match the unit "
             "given in the recipe (i.e. grams, ounces, etc.)"
             "The Recipe must be markdown."
-            "If the prompt is not about a recipe, the response should be in the following json format: "
-            '{type: "message", message: "message containing markdown"} '
-            "Recipes must always have 'recipe' as the type value and non-recipes must always have 'message' as the type value."
+            "If the prompt is not about a recipe, the response should be in the following JSON format: "
+            '{"type": "message", message: "message containing markdown"} '
+            'Recipes must always have "recipe" as the type value and non-recipes must always have "message" as the type value.'
         )
 
         user_prompt = serializer.validated_data["query"]
