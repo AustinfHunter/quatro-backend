@@ -10,10 +10,13 @@ class IngredientSerializer(serializers.Serializer):
     amount = serializers.IntegerField()
     unit = serializers.CharField()
 
+
 class ChatBotResponseSerializer(serializers.Serializer):
-    recipe = serializers.CharField()
-    ingredients = IngredientSerializer(many=True)
-    est_carbs = serializers.IntegerField()
-    est_protein = serializers.IntegerField()
-    est_fat = serializers.IntegerField()
-    est_calories = serializers.IntegerField()
+    type = serializers.CharField()
+    message = serializers.CharField(required=False)
+    recipe = serializers.CharField(required=False)
+    ingredients = IngredientSerializer(many=True, required=False)
+    est_carbs = serializers.IntegerField(required=False)
+    est_protein = serializers.IntegerField(required=False)
+    est_fat = serializers.IntegerField(required=False)
+    est_calories = serializers.IntegerField(required=False)
